@@ -1,0 +1,19 @@
+{
+  "name": "kidzboptions",
+  "version": "1.0.0",
+  "description": "Simple and small command line option parsing.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "tape tests/**/*_test.js"
+  },
+  "keywords": [
+    "options",
+    "arguments",
+    "getopt"
+  ],
+  "author": "Andrew Watt",
+  "license": "ISC"
+}
