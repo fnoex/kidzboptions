@@ -1,13 +1,28 @@
 'use strict';
 
+const UsageError = require('./usageError');
+const path = require('path');
+
 function createParser(schemaDefinitions = {}) {
     const schema = createSchema(schemaDefinitions);
 
-    function parse(argv) {
+    function parse(argv, usageStream = process.stderr) {
         const components = parseComponents(argv);
         console.log("parsed components:", components);
-        return processComponents(components, schema);
-        // TODO: try/catch with usage printing
+
+        try {
+            return processComponents(components, schema);
+        } catch (e) {
+            if (e instanceof UsageError) {
+                usageStream.write(e.message + '\n\n');
+                const scriptName = path.basename(argv[1]);
+                const usage = usageFromSchema(schema, scriptName);
+                usageStream.write(usage + '\n\n');
+                process.exit(1);
+            } else {
+                throw e;
+            }
+        }
     }
 
     // TODO: public API docs
@@ -39,6 +54,8 @@ function createSchema(definitions) {
 
         schema.push(scheme);
     });
+
+    // TODO: auto-add help arg
 
     return schema;
 }
@@ -148,8 +165,7 @@ function processComponents(components, schema) {
         string: function(component, scheme) {
             const next = components.shift();
             if (!(next && next.type === 'value')) {
-                // TODO: throw custom exception
-                throw new Error(`Argument ${component.raw} requires a string value`);
+                throw new UsageError(`Argument ${component.raw} requires a string value`);
             }
             result[scheme.name] = next.value;
         },
@@ -168,8 +184,7 @@ function processComponents(components, schema) {
         const scheme = findScheme(component);
         if (!scheme) {
             console.error("component:", component);
-            throw new Error("Unrecognized argument: " + component.raw);
-            // TODO: throw custom exception
+            throw new UsageError("Unrecognized argument: " + component.raw);
         }
 
         console.log("scheme type:", scheme.type);
@@ -180,6 +195,27 @@ function processComponents(components, schema) {
     // TODO: validate required options
 
     return result;
+}
+
+function usageFromSchema(schema, scriptName) {
+    const lines = [];
+    lines.push(`Usage: ${scriptName} [options]`);
+    lines.push(...schema.map(scheme => {
+        const buf = ['  '];
+        if (scheme.short) {
+            buf.push('-', scheme.short);
+        } else {
+            buf.push('  ');
+        }
+        buf.push(' --');
+        buf.push(scheme.long);
+        if (scheme.description) {
+            buf.push('\n     ');
+            buf.push(scheme.description);
+        }
+        return buf.join('');
+    }));
+    return lines.join('\n');
 }
 
 // TODO:, set banner/usage
