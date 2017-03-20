@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('tape');
-const kbo = require('../index');
+const kboptions = require('../index');
 
 function argvFor(args) {
     const argv = args.slice();
@@ -12,26 +12,28 @@ function argvFor(args) {
 test("short options are parsed", (t) => {
     t.plan(1);
 
-    const options = kbo.schema(
-        {
-            'foo': {
+    const options = kboptions.parser({
+        options: {
+            foo: {
                 short: 'f'
             }
-        })
-        .parse(argvFor(['-f']));
+        }
+    })
+    .parse(argvFor(['-f']));
 
     t.deepEqual(options, { foo: true });
     t.end();
 });
 
-test.skip("short options are automatically generated", (t) => {
+test("short options are automatically generated", (t) => {
     t.plan(1);
 
-    const options = kbo.schema(
-        {
+    const options = kboptions.parser({
+        options: {
             'foo': { }
-        })
-        .parse(argvFor(['-f']));
+        }
+    })
+    .parse(argvFor(['-f']));
 
     t.deepEqual(options, { foo: true });
     t.end();
@@ -41,9 +43,11 @@ test("short options cannot occur twice", (t) => {
     t.plan(1);
 
     t.throws(() => {
-        kbo.schema({
-            'foo': { short: 'f' },
-            'bar': { short: 'f' }
+        kboptions.parser({
+            options: {
+                foo: { short: 'f' },
+                bar: { short: 'f' }
+            }
         });
     });
     t.end();
@@ -52,11 +56,12 @@ test("short options cannot occur twice", (t) => {
 test("long options are parsed", (t) => {
     t.plan(1);
 
-    const options = kbo.schema(
-        {
+    const options = kboptions.parser({
+        options: {
             'foo': { }
-        })
-        .parse(argvFor(['--foo']));
+        }
+    })
+    .parse(argvFor(['--foo']));
 
     t.deepEqual(options, { foo: true });
     t.end();

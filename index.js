@@ -25,34 +25,34 @@ function createParser(schemaDefinitions = {}) {
     };
 }
 
-function createSchema(definitions) {
+function createSchema({ options, positional }) {
     const supportedTypes = [ 'string', 'boolean' ];
 
     const schema = { options: [], positional: [] };
-    Object.keys(definitions.options).forEach(key => {
-        const definition = definitions[key];
-        const type = definition.type || 'boolean';
+    Object.keys(options).forEach(key => {
+        const option = options[key];
+        const type = option.type || 'boolean';
         const scheme = {
             name: key,
             type,
-            description: definition.description,
+            description: option.description,
             long: key,
-            short: definition.short
+            short: option.short
         };
 
         if (!supportedTypes.includes(type)) {
             throw new Error(`Argument type for ${key} must be one of: ${supportedTypes.join(', ')}`);
         }
 
-        if (definition.short && schema.options.some(s => s.short === definition.short)) {
-            throw new Error(`Short option ${definition.short} specified twice`);
+        if (option.short && schema.options.some(s => s.short === option.short)) {
+            throw new Error(`Short option ${option.short} specified twice`);
         }
 
         schema.options.push(scheme);
     });
 
-    if (definitions.positional && definitions.positional.length) {
-        definitions.positional.forEach(key => {
+    if (positional && positional.length) {
+        positional.forEach(key => {
             if (schema.options.some(s => s.name === key)) {
                 throw new Error(`Option name ${key} specified twice`);
             }
@@ -175,7 +175,7 @@ function parseValue(arg) {
 function processComponents(components, schema) {
 
     function findScheme(component) {
-        return schema.find(scheme => {
+        return schema.options.find(scheme => {
             const name = scheme[component.type];
             return name && name === component.value;
         });
@@ -222,7 +222,7 @@ function processComponents(components, schema) {
 function usageFromSchema(schema, scriptName) {
     const lines = [];
     lines.push(`Usage: ${scriptName} [options]`);
-    lines.push(...schema.map(scheme => {
+    lines.push(...schema.options.map(scheme => {
         const buf = ['  '];
         if (scheme.short) {
             buf.push('-', scheme.short);
@@ -244,6 +244,6 @@ function usageFromSchema(schema, scriptName) {
 
 module.exports = {
     // TODO: docs
-    schema: createParser,
+    parser: createParser,
     UsageError
 };
