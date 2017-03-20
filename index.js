@@ -1,6 +1,47 @@
 'use strict';
 
-function parse(argv) {
+function createParser(schemaDefinitions) {
+    const schema = createSchema(schemaDefinitions);
+
+    function parse(argv) {
+        const components = parseComponents(argv);
+        return processComponents(components, schema);
+    }
+
+    // TODO: public API docs
+    return { parse };
+}
+
+function createSchema(definitions) {
+    const supportedTypes = [ 'string', 'boolean' ];
+
+    const schema = [];
+    Object.keys(definitions).forEach(key => {
+        const definition = definitions[key];
+        const scheme = {
+            name: key,
+            type: definition.type,
+            description: definition.description,
+            long: key,
+            short: definition.short
+        };
+
+        const type = definition.type || 'boolean';
+        if (!supportedTypes.includes(type)) {
+            throw new Error(`Argument type for ${key} must be one of: ${supportedTypes.join(', ')}`);
+        }
+
+        if (definition.short && schema.some(s => s.short === definition.short)) {
+            throw new Error(`Short option ${definition.short} specified twice`);
+        }
+
+        schema.push(scheme);
+    });
+
+    return schema;
+}
+
+function parseComponents(argv) {
     if (!(argv && argv.length)) {
         return [];
     }
@@ -131,29 +172,9 @@ function processComponents(components, schema) {
     return result;
 }
 
-console.log("process.argv:", process.argv);
-const components = parse(process.argv);
-const schema = [
-    {
-        name: 'firstName',
-        long: 'first-name',
-        short: 'f',
-        type: 'string'
-    },
-    {
-        name: 'lastName',
-        long: 'last-name',
-        short: 'l',
-        type: 'string'
-    },
-    {
-        name: 'florped',
-        long: 'florped',
-        short: 'P',
-        type: 'boolean'
-    }
-];
-console.log("parsed components:", components);
-const result = processComponents(components, schema);
+// TODO:, set banner/usage
 
-console.log("result:", result);
+module.exports = {
+    // TODO: docs
+    schema: createParser
+};
