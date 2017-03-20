@@ -2,14 +2,9 @@
 
 const test = require('tape');
 const kboptions = require('../index');
+const argvFor = require('./argvFor');
 
-function argvFor(args) {
-    const argv = args.slice();
-    argv.unshift('', '');
-    return argv;
-}
-
-test("short options are parsed", (t) => {
+test("short boolean options are parsed", (t) => {
     t.plan(1);
 
     const options = kboptions.parser({
@@ -22,6 +17,23 @@ test("short options are parsed", (t) => {
     .parse(argvFor(['-f']));
 
     t.deepEqual(options, { foo: true });
+    t.end();
+});
+
+test("short string options are parsed", (t) => {
+    t.plan(1);
+
+    const options = kboptions.parser({
+        options: {
+            foo: {
+                short: 'f',
+                type: 'string'
+            }
+        }
+    })
+    .parse(argvFor(['-f', 'bar']));
+
+    t.deepEqual(options, { foo: 'bar' });
     t.end();
 });
 
@@ -50,19 +62,5 @@ test("short options cannot occur twice", (t) => {
             }
         });
     });
-    t.end();
-});
-
-test("long options are parsed", (t) => {
-    t.plan(1);
-
-    const options = kboptions.parser({
-        options: {
-            'foo': { }
-        }
-    })
-    .parse(argvFor(['--foo']));
-
-    t.deepEqual(options, { foo: true });
     t.end();
 });

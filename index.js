@@ -62,14 +62,14 @@ function createSchema({ options, positional }) {
         });
     }
 
-    if (!schema.options.some(s => s.name === 'help')) {
-        schema.options.push({
-            name: 'help',
-            type: 'boolean',
-            description: 'Show this help',
-            long: 'help'
-        });
-    }
+    // if (!schema.options.some(s => s.name === 'help')) {
+    //     schema.options.push({
+    //         name: 'help',
+    //         type: 'boolean',
+    //         description: 'Show this help',
+    //         long: 'help'
+    //     });
+    // }
 
     // Automatically create short options where possible.
     schema.options.filter(s => !s.short).forEach(scheme => {
@@ -213,6 +213,11 @@ function processComponents(components, schema) {
         const consume = consumers[scheme.type];
         consume(component, scheme);
     }
+
+    // Ensure booleans are present
+    schema.options.filter(s => s.type === 'boolean').forEach(scheme => {
+        result[scheme.name] = Boolean(result[scheme.name]);
+    });
 
     // TODO: validate required options
 
