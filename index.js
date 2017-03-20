@@ -6,34 +6,30 @@ const path = require('path');
 function createParser(schemaDefinitions = {}) {
     const schema = createSchema(schemaDefinitions);
 
-    function parse(argv, usageStream = process.stderr) {
+    function parse(argv) {
         const components = parseComponents(argv);
         console.log("parsed components:", components);
+        return processComponents(components, schema);
+    }
 
-        try {
-            return processComponents(components, schema);
-        } catch (e) {
-            if (e instanceof UsageError) {
-                usageStream.write(e.message + '\n\n');
-                const scriptName = path.basename(argv[1]);
-                const usage = usageFromSchema(schema, scriptName);
-                usageStream.write(usage + '\n\n');
-                process.exit(1);
-            } else {
-                throw e;
-            }
-        }
+    function educate(argv1 = process.argv[1]) {
+        const scriptName = path.basename(argv1);
+        const usage = usageFromSchema(schema, scriptName);
+        console.error(usage + '\n');
     }
 
     // TODO: public API docs
-    return { parse };
+    return {
+        parse,
+        educate
+    };
 }
 
 function createSchema(definitions) {
     const supportedTypes = [ 'string', 'boolean' ];
 
-    const schema = [];
-    Object.keys(definitions).forEach(key => {
+    const schema = { options: [], positional: [] };
+    Object.keys(definitions.options).forEach(key => {
         const definition = definitions[key];
         const type = definition.type || 'boolean';
         const scheme = {
@@ -48,14 +44,40 @@ function createSchema(definitions) {
             throw new Error(`Argument type for ${key} must be one of: ${supportedTypes.join(', ')}`);
         }
 
-        if (definition.short && schema.some(s => s.short === definition.short)) {
+        if (definition.short && schema.options.some(s => s.short === definition.short)) {
             throw new Error(`Short option ${definition.short} specified twice`);
         }
 
-        schema.push(scheme);
+        schema.options.push(scheme);
     });
 
-    // TODO: auto-add help arg
+    if (definitions.positional && definitions.positional.length) {
+        definitions.positional.forEach(key => {
+            if (schema.options.some(s => s.name === key)) {
+                throw new Error(`Option name ${key} specified twice`);
+            }
+            schema.positional.push({
+                name: key
+            });
+        });
+    }
+
+    if (!schema.options.some(s => s.name === 'help')) {
+        schema.options.push({
+            name: 'help',
+            type: 'boolean',
+            description: 'Show this help',
+            long: 'help'
+        });
+    }
+
+    // Automatically create short options where possible.
+    schema.options.filter(s => !s.short).forEach(scheme => {
+        const autoshort = scheme.long.charAt(0);
+        if (!schema.options.some(s => s.short === autoshort)) {
+            scheme.short = autoshort;
+        }
+    });
 
     return schema;
 }
