@@ -62,15 +62,6 @@ function createSchema({ options, positional }) {
         });
     }
 
-    // if (!schema.options.some(s => s.name === 'help')) {
-    //     schema.options.push({
-    //         name: 'help',
-    //         type: 'boolean',
-    //         description: 'Show this help',
-    //         long: 'help'
-    //     });
-    // }
-
     // Automatically create short options where possible.
     schema.options.filter(s => !s.short).forEach(scheme => {
         const autoshort = scheme.long.charAt(0);
@@ -127,11 +118,11 @@ function parseLongOption(arg) {
             raw: arg
         });
         if (match[3]) {
-            // TODO: mark this and validate so that --my-bool=value fails
             results.push({
                 type: 'value',
                 value: match[3],
-                raw: match[3]
+                raw: match[3],
+                attached: true
             });
         }
     }
@@ -194,24 +185,36 @@ function processComponents(components, schema) {
 
         boolean: function(component, scheme) {
             result[scheme.name] = !result[scheme.name];
-        },
 
-        value: function(component, scheme) {
-            // TODO
+            const next = components[0];
+            if (next && next.attached) {
+                throw new UsageError(`Argument ${component.raw} is boolean and does not take a value`);
+            }
         }
     };
 
+    const positional = schema.positional.slice();
+
     while (components.length > 0) {
         const component = components.shift();
-        const scheme = findScheme(component);
-        if (!scheme) {
-            console.error("component:", component);
-            throw new UsageError("Unrecognized argument: " + component.raw);
-        }
+        if (component.type === 'value') {
+            const scheme = positional.shift();
+            if (!scheme) {
+                throw new UsageError("Unexpected extra argument");
+            }
 
-        console.log("scheme type:", scheme.type);
-        const consume = consumers[scheme.type];
-        consume(component, scheme);
+            result[scheme.name] = component.value;
+        } else {
+            const scheme = findScheme(component);
+            if (!scheme) {
+                console.error("component:", component);
+                throw new UsageError("Unrecognized argument: " + component.raw);
+            }
+
+            console.log("scheme type:", scheme.type);
+            const consume = consumers[scheme.type];
+            consume(component, scheme);
+        }
     }
 
     // Ensure booleans are present

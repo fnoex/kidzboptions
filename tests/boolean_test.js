@@ -30,3 +30,14 @@ test("multiple booleans flip the value", (t) => {
 
     t.end();
 });
+
+test("boolean with value attached throws error", (t) => {
+    t.plan(1);
+
+    const parser = kboptions.parser({ options: { foo: {} } });
+
+    t.throws(() => {
+        parser.parse(argvFor(['--foo=anything']));
+    });
+    t.end();
+});
