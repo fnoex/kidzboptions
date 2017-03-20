@@ -105,7 +105,7 @@ function parseLongOption(arg) {
             raw: arg
         });
         if (match[3]) {
-            // TODO: mark this and validate so that --my-bool=value
+            // TODO: mark this and validate so that --my-bool=value fails
             results.push({
                 type: 'value',
                 value: match[3],
@@ -222,5 +222,6 @@ function usageFromSchema(schema, scriptName) {
 
 module.exports = {
     // TODO: docs
-    schema: createParser
+    schema: createParser,
+    UsageError
 };
