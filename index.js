@@ -1,11 +1,13 @@
 'use strict';
 
-function createParser(schemaDefinitions) {
+function createParser(schemaDefinitions = {}) {
     const schema = createSchema(schemaDefinitions);
 
     function parse(argv) {
         const components = parseComponents(argv);
+        console.log("parsed components:", components);
         return processComponents(components, schema);
+        // TODO: try/catch with usage printing
     }
 
     // TODO: public API docs
@@ -18,15 +20,15 @@ function createSchema(definitions) {
     const schema = [];
     Object.keys(definitions).forEach(key => {
         const definition = definitions[key];
+        const type = definition.type || 'boolean';
         const scheme = {
             name: key,
-            type: definition.type,
+            type,
             description: definition.description,
             long: key,
             short: definition.short
         };
 
-        const type = definition.type || 'boolean';
         if (!supportedTypes.includes(type)) {
             throw new Error(`Argument type for ${key} must be one of: ${supportedTypes.join(', ')}`);
         }
@@ -46,31 +48,35 @@ function parseComponents(argv) {
         return [];
     }
     const args = argv.slice(2);
+
+    console.log("args:", args);
+    const matchers = [
+        parseLongOption,
+        parseShortOptionSet,
+        parseShortOption,
+        // TODO
+        // parseOptionTerminator
+        parseValue
+    ];
+
+    function componentsFromArg(arg) {
+        for (let i = 0, len = matchers.length; i < len; i++) {
+            const matcher = matchers[i];
+            const components = matcher(arg);
+            if (components.length > 0) {
+                return components;
+            }
+        }
+    }
+
     const components = args.reduce((components, arg) => {
         components.push(...componentsFromArg(arg));
         return components;
     }, []);
+
     return components;
 }
 
-function componentsFromArg(arg) {
-    for (let i = 0, len = matchers.length; i < len; i++) {
-        const matcher = matchers[i];
-        const components = matcher(arg);
-        if (components.length > 0) {
-            return components;
-        }
-    }
-}
-
-const matchers = [
-    parseLongOption,
-    parseShortOptionSet,
-    parseShortOption,
-    // TODO
-    // parseOptionTerminator
-    parseValue
-];
 
 function parseLongOption(arg) {
     let results = [];
@@ -82,6 +88,7 @@ function parseLongOption(arg) {
             raw: arg
         });
         if (match[3]) {
+            // TODO: mark this and validate so that --my-bool=value
             results.push({
                 type: 'value',
                 value: match[3],
@@ -141,7 +148,7 @@ function processComponents(components, schema) {
         string: function(component, scheme) {
             const next = components.shift();
             if (!(next && next.type === 'value')) {
-                // throw new usage error
+                // TODO: throw custom exception
                 throw new Error(`Argument ${component.raw} requires a string value`);
             }
             result[scheme.name] = next.value;
@@ -162,12 +169,15 @@ function processComponents(components, schema) {
         if (!scheme) {
             console.error("component:", component);
             throw new Error("Unrecognized argument: " + component.raw);
-            // throw unrecognized argument exception: component.raw
+            // TODO: throw custom exception
         }
 
+        console.log("scheme type:", scheme.type);
         const consume = consumers[scheme.type];
         consume(component, scheme);
     }
+
+    // TODO: validate required options
 
     return result;
 }
