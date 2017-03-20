@@ -8,7 +8,7 @@ Lightweight command-line option parsing.
 const kboptions = require('kidzboptions');
 
 const parser = kboptions.parser({
-    options: 
+    options: {
         "first-name": {
             // currently supported types are "string" or "boolean"
             type: "string",
@@ -19,10 +19,10 @@ const parser = kboptions.parser({
 
             // description is optional
             description: "User's first name"
-        }
+        },
         "last-name": {
             type: "string",
-            description: "User's last name"
+            description: "User's last name",
 
             // Unless specified, all options are optional
             required: true
