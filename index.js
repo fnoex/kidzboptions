@@ -2,6 +2,7 @@
 
 const UsageError = require('./usageError');
 const path = require('path');
+const os = require('os');
 
 function createParser(schemaDefinitions = {}) {
     const schema = createSchema(schemaDefinitions);
@@ -12,20 +13,36 @@ function createParser(schemaDefinitions = {}) {
         return processComponents(components, schema);
     }
 
-    function educate(argv1 = process.argv[1]) {
+    function usage(argv1 = process.argv[1]) {
         const scriptName = path.basename(argv1);
-        const usage = usageFromSchema(schema, scriptName);
-        console.error(usage + '\n');
+        return usageFromSchema(schema, scriptName);
     }
 
-    // TODO: public API docs
     return {
+        /**
+         * Parses an ARGV array and returns an object containing values keyed
+         * according to this parser's schema.
+         *
+         * @param {Array<string>} argv
+         *      The ARGV array, generally from `process.argv`.
+         * @returns {Object} an object with option values
+         * @throws UsageError if parsing fails
+        **/
         parse,
-        educate
+        /**
+         * Gets a human-friendly string containing the usage info, generated
+         * from the option schema. You can display this with `console.error`
+         * or similar method.
+         * @param {String} argv1
+         *      The name of this program to display in the usage. The default
+         *      value is `process.argv[1]`, which is generally ideal.
+         * @returns {String}
+        **/
+        usage
     };
 }
 
-function createSchema({ options, positional }) {
+function createSchema({ options = {}, positional = [] }) {
     const supportedTypes = [ 'string', 'boolean' ];
 
     const schema = { options: [], positional: [] };
@@ -45,8 +62,13 @@ function createSchema({ options, positional }) {
             throw new Error(`Argument type for ${key} must be one of: ${supportedTypes.join(', ')}`);
         }
 
-        if (option.short && schema.options.some(s => s.short === option.short)) {
-            throw new Error(`Short option ${option.short} specified twice`);
+        if (option.short) {
+            if (option.short.length > 1) {
+                throw new Error(`Illegal short option -${option.short} must be 1 character.`);
+            }
+            if (schema.options.some(s => s.short === option.short)) {
+                throw new Error(`Short option -${option.short} specified twice`);
+            }
         }
 
         schema.options.push(scheme);
@@ -233,28 +255,59 @@ function processComponents(components, schema) {
 }
 
 function usageFromSchema(schema, scriptName) {
-    const lines = [];
-    lines.push(`Usage: ${scriptName} [options]`);
-    lines.push(...schema.options.map(scheme => {
-        const buf = ['  '];
+    let buf = '';
+    const eol = os.EOL;
+
+    buf += `Usage: ${scriptName} [options]`;
+    schema.positional.forEach(scheme => {
+        buf += ` <${scheme.name}>`;
+    });
+    buf += eol;
+
+    schema.options.forEach(scheme => {
+        buf += '  ';
         if (scheme.short) {
-            buf.push('-', scheme.short);
+            buf += `-${scheme.short}`;
         } else {
-            buf.push('  ');
+            buf += '  ';
         }
-        buf.push(' --');
-        buf.push(scheme.long);
+        buf += ` --${scheme.long}`;
         if (scheme.description) {
-            buf.push('\n     ');
-            buf.push(scheme.description);
+            buf += eol;
+            buf += '     ';
+            buf += scheme.description;
         }
-        return buf.join('');
-    }));
-    return lines.join('\n');
+        buf += eol;
+    });
+    return buf;
 }
 
 module.exports = {
-    // TODO: docs
+    /**
+     * Creates a parser with the specified option schema.
+     *
+     * @param {Object} config
+     * @param {Object} config.options
+     *      The options. Each key is the name of an option that will be
+     *      returned in the parse result. The option names double as the
+     *      long-name form of each option. Each option can have the following
+     *      properties, all of which are optional:
+     *
+     *      type: "string" and "boolean" (default: "boolean")
+     *      short: the short option character (default: first character of
+     *             long name, if there is no conflict)
+     *      required: A boolean indicating the field is required. Only
+     *                meaningful for strings. (default: false)
+     *      description: The description, which will be printed in the usage
+     *                   text.
+     * @param {Array<string>} config.positional
+     *      The names of required positional arguments.
+    **/
     parser: createParser,
+    /**
+     * Thrown by the parser if the specified ARGV array does not match the
+     * parser's schema. Generally you will want to catch this and react by
+     * printing the parser's `usage`.
+    **/
     UsageError
 };

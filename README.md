@@ -47,8 +47,17 @@ const options = function() {
         if (e instanceof kboptions.UsageError) {
             console.error(e.message);
 
-            // Prints usage info generated from option schema
-            parser.educate();
+            // Prints:
+            // Usage: example.js [options] <input-file> <output-file>
+            //   -f --first-name
+            //      User's first name
+            //   -l --last-name
+            //      User's last name
+            //   -d --dog-lover
+            //      User loves dogs
+            //   -c --cat-lover
+            //      User loves cats
+            console.error(parser.usage());
 
             process.exit(1);
         } else {
