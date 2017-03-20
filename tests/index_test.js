@@ -1,19 +1,37 @@
 'use strict';
 
 const test = require('tape');
-const options = require('../options');
+const kbo = require('../index');
 
-test('short option parsing', (t) => {
+function argvFor(args) {
+    const argv = args.slice();
+    argv.shift('', '');
+    return argv;
+}
+
+test("short options are parsed", (t) => {
     t.plan(1);
 
-    const result = options.parse("-a");
-    t.deepEqual(result, { apple: true });
+    const options = kbo.schema(
+        {
+            'foo': {
+                short: 'f'
+            }
+        })
+        .parse(argvFor(['-f']));
+
+    t.deepEqual(options, { foo: true });
+    t.end();
 });
 
-test('long option parsing', (t) => {
+test("short options are automatically generated", (t) => {
 
 });
 
-test('unexpected arguments throw an error', (t) => {
+test("long options are parsed", (t) => {
+    t.end();
+});
 
+test("unexpected arguments throw an error", (t) => {
+    t.end();
 });

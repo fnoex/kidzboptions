@@ -15,5 +15,8 @@
     "getopt"
   ],
   "author": "Andrew Watt",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "tape": "^4.6.3"
+  }
 }
