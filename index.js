@@ -37,7 +37,8 @@ function createSchema({ options, positional }) {
             type,
             description: option.description,
             long: key,
-            short: option.short
+            short: option.short,
+            required: Boolean(option.required)
         };
 
         if (!supportedTypes.includes(type)) {
@@ -222,7 +223,11 @@ function processComponents(components, schema) {
         result[scheme.name] = Boolean(result[scheme.name]);
     });
 
-    // TODO: validate required options
+    schema.options.filter(s => s.required).forEach(scheme => {
+        if (!result[scheme.name]) {
+            throw new UsageError(`Missing required option --${scheme.long}`);
+        }
+    });
 
     return result;
 }
@@ -247,8 +252,6 @@ function usageFromSchema(schema, scriptName) {
     }));
     return lines.join('\n');
 }
-
-// TODO:, set banner/usage
 
 module.exports = {
     // TODO: docs
