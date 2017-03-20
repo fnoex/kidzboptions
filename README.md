@@ -4,35 +4,70 @@ Lightweight command-line option parsing.
 
 ## Usage
 
-```
-const kbo = require('kidzboptions');
+```javascript
+const kboptions = require('kidzboptions');
 
-const options = kbo.schema(
-  {
-    foo: {
-      type: 'boolean',
-      short: 'f',
-      description: 'Enables foo mode.'
+const parser = kboptions.parser({
+    options: 
+        "first-name": {
+            // currently supported types are "string" or "boolean"
+            type: "string",
+
+            // if not specified, short option is automatically generated
+            // from first character of long option
+            short: "f",
+
+            // description is optional
+            description: "User's first name"
+        }
+        "last-name": {
+            type: "string",
+            description: "User's last name"
+
+            // Unless specified, all options are optional
+            required: true
+        },
+        "dog-lover": {
+            // If not specified, type defaults to "boolean"
+
+            description: "User loves dogs"
+        },
+        "cat-lover": {
+            description: "User loves cats"
+        }
     },
-    'baz-quux': {
-      type: 'string',
-      short: 'b',
-      description: 'Specifies the baz-quux.'
+    // Positional arguments can be named
+    positional: ["input-file", "output-file"]
+});
+
+const options = function() {
+    try {
+        return parser.parse(process.argv);
+    } catch (e) {
+        if (e instanceof kboptions.UsageError) {
+            console.error(e.message);
+
+            // Prints usage info generated from option schema
+            parser.educate();
+
+            process.exit(1);
+        } else {
+            throw e;
+        }
     }
-  })
-  .parse(process.argv);
+}();
 ```
 
-Kidzboptions has a very small API. It exposes one method: `schema`, which takes an object describing the options you want to parse.
+Kidzboptions has a very small API. It exposes one method: `parser`, which takes an object describing the options you want to parse, and returns a parser.
 
-`schema` returns another object with one method: `parse`, which takes an ARGV string array and returns an object containing parsed options.
+The parser also has one method, `parse`, which takes an ARGV string array and returns an object containing parsed options.
 
 ## API
 
-### schema()
+### kboptions.parser({ options, positional })
 
 TODO
 
-### parse()
+### parser.parse(argv)
 
 TODO
