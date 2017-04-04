@@ -7,12 +7,12 @@ const argvFor = require('./argvFor');
 test("positional arguments are parsed", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: { },
         positional: ['a', 'b']
     })
     .parse(argvFor(['foo', 'bar']));
 
-    t.deepEqual(options, { a: 'foo', b: 'bar' });
+    t.deepEqual(result.options, { a: 'foo', b: 'bar' });
     t.end();
 });

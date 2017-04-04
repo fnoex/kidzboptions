@@ -7,7 +7,7 @@ const argvFor = require('./argvFor');
 test("short boolean options are parsed", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             foo: {
                 short: 'f'
@@ -16,14 +16,14 @@ test("short boolean options are parsed", (t) => {
     })
     .parse(argvFor(['-f']));
 
-    t.deepEqual(options, { foo: true });
+    t.deepEqual(result.options, { foo: true });
     t.end();
 });
 
 test("short string options are parsed", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             foo: {
                 short: 'f',
@@ -33,21 +33,21 @@ test("short string options are parsed", (t) => {
     })
     .parse(argvFor(['-f', 'bar']));
 
-    t.deepEqual(options, { foo: 'bar' });
+    t.deepEqual(result.options, { foo: 'bar' });
     t.end();
 });
 
 test("short options are automatically generated", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             'foo': { }
         }
     })
     .parse(argvFor(['-f']));
 
-    t.deepEqual(options, { foo: true });
+    t.deepEqual(result.options, { foo: true });
     t.end();
 });
 

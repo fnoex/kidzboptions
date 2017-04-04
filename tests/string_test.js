@@ -7,7 +7,7 @@ const argvFor = require('./argvFor');
 test("string values are parsed", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             foo: {
                 type: 'string'
@@ -19,32 +19,31 @@ test("string values are parsed", (t) => {
     })
     .parse(argvFor(['-f', 'dog', '--bar=cat']));
 
-    t.deepEqual(options, { foo: 'dog', bar: 'cat' });
+    t.deepEqual(result.options, { foo: 'dog', bar: 'cat' });
     t.end();
 });
 
 test("required strings must be present", (t) => {
     t.plan(1);
 
-    const parser = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             foo: {
                 type: 'string',
                 required: true
             }
         }
-    });
+    })
+    .parse(argvFor([]));
 
-    t.throws(() => {
-        parser.parse(argvFor([]));
-    });
+    t.ok(result.errors);
     t.end();
 });
 
 test("optional strings can be missing", (t) => {
     t.plan(1);
 
-    const options = kboptions.parser({
+    const result = kboptions.parser({
         options: {
             foo: {
                 type: 'string'
@@ -53,6 +52,6 @@ test("optional strings can be missing", (t) => {
     })
     .parse(argvFor([]));
 
-    t.deepEqual(options, {});
+    t.deepEqual(result.options, {});
     t.end();
 });

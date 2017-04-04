@@ -10,7 +10,8 @@ test("multiple booleans flip the value", (t) => {
     const parser = kboptions.parser({ options: { foo: {} } });
 
     function testArgs(args, truth) {
-        t.deepEqual(parser.parse(argvFor(args)), { foo: truth });
+        const result = parser.parse(argvFor(args));
+        t.deepEqual(result.options, { foo: truth });
     }
 
     testArgs([], false);
@@ -31,13 +32,13 @@ test("multiple booleans flip the value", (t) => {
     t.end();
 });
 
-test("boolean with value attached throws error", (t) => {
+test("boolean with value attached causes error", (t) => {
     t.plan(1);
 
     const parser = kboptions.parser({ options: { foo: {} } });
 
-    t.throws(() => {
-        parser.parse(argvFor(['--foo=anything']));
-    });
+    const result = parser.parse(argvFor(['--foo=anything']));
+
+    t.ok(result.errors);
     t.end();
 });
