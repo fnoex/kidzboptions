@@ -1,11 +1,31 @@
 'use strict';
 
-const UsageError = require('./usageError');
 const path = require('path');
 const os = require('os');
 
-function createParser(schemaDefinitions = {}) {
-    const schema = createSchema(schemaDefinitions);
+// TODO: document
+// helper func
+function parse() {
+    const parser = factory(...arguments);
+    const result = parser.parse(process.argv);
+    if (result.help) {
+        console.log(parser.usage());
+        process.exit(0);
+    } else if (result.version) {
+        console.log("TODO: version");
+        process.exit(0);
+    } else if (result.errors.length > 0) {
+        console.error(result.errors[0]);
+        console.error(parser.usage());
+        process.exit(1);
+    }
+    return result.options;
+}
+
+// TODO: document
+// manual parser creation
+function factory({ banner, version, named = {}, positioned = [] }) {
+    const schema = createSchema({ options: named, positional: positioned, version });
 
     function parse(argv) {
         const components = parseComponents(argv);
@@ -20,13 +40,12 @@ function createParser(schemaDefinitions = {}) {
 
     return {
         /**
-         * Parses an ARGV array and returns an object containing values keyed
-         * according to this parser's schema.
+         * Parses an ARGV array and returns an object representing the result
+         * of parsing.
          *
-         * @param {Array<string>} argv
+         * @param {array<string>} argv
          *      The ARGV array, generally from `process.argv`.
-         * @returns {Object} an object with option values
-         * @throws UsageError if parsing fails
+         * @returns {processComponents#result} the parsing result
         **/
         parse,
         /**
@@ -42,10 +61,41 @@ function createParser(schemaDefinitions = {}) {
     };
 }
 
-function createSchema({ options = {}, positional = [] }) {
+// TODO: rename args
+function createSchema({ options, positional, version }) {
     const supportedTypes = [ 'string', 'boolean' ];
-
     const schema = { options: [], positional: [] };
+
+    if (!options.help) {
+        // Auto-generate a help option
+        const help = {
+            name: 'help',
+            type: 'help',
+            description: 'Show this help message.',
+            long: 'help',
+            required: false
+        };
+        if (!options.some(option => option.short === 'h')) {
+            help.short = 'h';
+        }
+        schema.options.push(help);
+    }
+
+    if (version && !options.version) {
+        // Auto-generate a version option
+        const version = {
+            name: 'version',
+            type: 'version',
+            description: 'Print the version number and exit.',
+            long: 'version',
+            required: false
+        };
+        if (!options.some(option => option.short === 'v')) {
+            version.short = 'v';
+        }
+        schema.options.push(version);
+    }
+
     Object.keys(options).forEach(key => {
         const option = options[key];
         const type = option.type || 'boolean';
@@ -112,6 +162,61 @@ function parseComponents(argv) {
         parseValue
     ];
 
+    function parseLongOption(arg) {
+        let results = [];
+        const match = /^--([^=]+)(=(.*))?/.exec(arg);
+        if (match) {
+            results.push({
+                type: 'long',
+                value: match[1],
+                raw: arg
+            });
+            if (match[3]) {
+                results.push({
+                    type: 'value',
+                    value: match[3],
+                    raw: match[3],
+                    attached: true
+                });
+            }
+        }
+        return results;
+    }
+
+    function parseShortOptionSet(arg) {
+        const match = /^-([^\-\s]{2,})/.exec(arg);
+        if (match) {
+            return match[1].split('').map(char => {
+                return {
+                    type: 'short',
+                    value: char,
+                    raw: `-${char}`
+                };
+            });
+        }
+        return [];
+    }
+
+    function parseShortOption(arg) {
+        const match = /^-([^\-\s])/.exec(arg);
+        if (match) {
+            return [{
+                type: 'short',
+                value: match[1],
+                raw: arg
+            }];
+        }
+        return [];
+    }
+
+    function parseValue(arg) {
+        return [{
+            type: 'value',
+            value: arg,
+            raw: arg
+        }];
+    }
+
     function componentsFromArg(arg) {
         for (let i = 0, len = matchers.length; i < len; i++) {
             const matcher = matchers[i];
@@ -130,62 +235,14 @@ function parseComponents(argv) {
     return components;
 }
 
-
-function parseLongOption(arg) {
-    let results = [];
-    const match = /^--([^=]+)(=(.*))?/.exec(arg);
-    if (match) {
-        results.push({
-            type: 'long',
-            value: match[1],
-            raw: arg
-        });
-        if (match[3]) {
-            results.push({
-                type: 'value',
-                value: match[3],
-                raw: match[3],
-                attached: true
-            });
-        }
-    }
-    return results;
-}
-
-function parseShortOptionSet(arg) {
-    const match = /^-([^\-\s]{2,})/.exec(arg);
-    if (match) {
-        return match[1].split('').map(char => {
-            return {
-                type: 'short',
-                value: char,
-                raw: `-${char}`
-            };
-        });
-    }
-    return [];
-}
-
-function parseShortOption(arg) {
-    const match = /^-([^\-\s])/.exec(arg);
-    if (match) {
-        return [{
-            type: 'short',
-            value: match[1],
-            raw: arg
-        }];
-    }
-    return [];
-}
-
-function parseValue(arg) {
-    return [{
-        type: 'value',
-        value: arg,
-        raw: arg
-    }];
-}
-
+/**
+ * Process components using the give schema.
+ * @param {array} components
+ *      the parsed components
+ * @param {object} schema
+ *      the option schema to validate against
+ * @returns {processComponents#result} the processing result
+**/
 function processComponents(components, schema) {
 
     function findScheme(component) {
@@ -195,24 +252,49 @@ function processComponents(components, schema) {
         });
     }
 
-    let result = {};
+    /**
+     * TODO: look up proper way to jsdoc this
+     * @typedef processComponents#result
+     * @member {object} options
+     * @member {boolean} help
+     *      true if the --help option was invoked
+     * @member {boolean} version
+     *      true if the --version option was invoked
+     * @member {array}
+     *      contains parsing errors
+    **/
+    const result = {
+        options: {},
+        help: false,
+        version: false,
+        errors: []
+    };
 
     const consumers = {
         string: function(component, scheme) {
             const next = components.shift();
             if (!(next && next.type === 'value')) {
-                throw new UsageError(`Argument ${component.raw} requires a string value`);
+                result.errors.push(`Argument ${component.raw} requires a string value`);
+            } else {
+                result.options[scheme.name] = next.value;
             }
-            result[scheme.name] = next.value;
         },
 
         boolean: function(component, scheme) {
-            result[scheme.name] = !result[scheme.name];
+            result.options[scheme.name] = !result.options[scheme.name];
 
             const next = components[0];
             if (next && next.attached) {
-                throw new UsageError(`Argument ${component.raw} is boolean and does not take a value`);
+                result.errors.push(`Argument ${component.raw} is boolean and does not take a value`);
             }
+        },
+
+        help: function(component, scheme) {
+            result.help = true;
+        },
+
+        version: function(component, scheme) {
+            result.version = true;
         }
     };
 
@@ -223,31 +305,29 @@ function processComponents(components, schema) {
         if (component.type === 'value') {
             const scheme = positional.shift();
             if (!scheme) {
-                throw new UsageError("Unexpected extra argument");
+                result.errors.push("Unexpected extra argument");
             }
 
-            result[scheme.name] = component.value;
+            result.options[scheme.name] = component.value;
         } else {
             const scheme = findScheme(component);
             if (!scheme) {
-                console.error("component:", component);
-                throw new UsageError("Unrecognized argument: " + component.raw);
+                result.errors.push("Unrecognized argument: " + component.raw);
+            } else {
+                const consume = consumers[scheme.type];
+                consume(component, scheme);
             }
-
-            console.log("scheme type:", scheme.type);
-            const consume = consumers[scheme.type];
-            consume(component, scheme);
         }
     }
 
     // Ensure booleans are present
     schema.options.filter(s => s.type === 'boolean').forEach(scheme => {
-        result[scheme.name] = Boolean(result[scheme.name]);
+        result.options[scheme.name] = Boolean(result.options[scheme.name]);
     });
 
     schema.options.filter(s => s.required).forEach(scheme => {
-        if (!result[scheme.name]) {
-            throw new UsageError(`Missing required option --${scheme.long}`);
+        if (!result.options[scheme.name]) {
+            result.errors.push(`Missing required option --${scheme.long}`);
         }
     });
 
@@ -258,12 +338,14 @@ function usageFromSchema(schema, scriptName) {
     let buf = '';
     const eol = os.EOL;
 
+    // TODO: add banner & version
     buf += `Usage: ${scriptName} [options]`;
     schema.positional.forEach(scheme => {
         buf += ` <${scheme.name}>`;
     });
     buf += eol;
 
+    // TODO: use templates or something
     schema.options.forEach(scheme => {
         buf += '  ';
         if (scheme.short) {
@@ -284,6 +366,18 @@ function usageFromSchema(schema, scriptName) {
 
 module.exports = {
     /**
+     * Easy mode. Parses ARGV using the specified option schema. If any
+     * arguments are missing or invalid, or if the `--help` option is
+     * specified, usage will be printed and the process will exit.
+     *
+     * @param {object} config
+     *      The parser configuration. See the documentation for `factory`
+     *      for more details.
+     *
+     * @returns {object} the parsed options, keyed by option name
+    **/
+    options: parse,
+    /**
      * Creates a parser with the specified option schema.
      *
      * @param {Object} config
@@ -303,11 +397,5 @@ module.exports = {
      * @param {Array<string>} config.positional
      *      The names of required positional arguments.
     **/
-    parser: createParser,
-    /**
-     * Thrown by the parser if the specified ARGV array does not match the
-     * parser's schema. Generally you will want to catch this and react by
-     * printing the parser's `usage`.
-    **/
-    UsageError
+    parser: factory,
 };
