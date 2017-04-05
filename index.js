@@ -3,8 +3,6 @@
 const path = require('path');
 const os = require('os');
 
-// TODO: document
-// helper func
 function easyOptions() {
     const parser = createParser(...arguments);
     const result = parser.parse(process.argv);
@@ -22,8 +20,6 @@ function easyOptions() {
     return result.options;
 }
 
-// TODO: document
-// manual parser creation
 function createParser({ banner, version, options = {}, positional = [] }) {
     const schema = createSchema({ options, positional, version });
     console.log(schema);
@@ -61,7 +57,6 @@ function createParser({ banner, version, options = {}, positional = [] }) {
     };
 }
 
-// TODO: rename args
 function createSchema({ options, positional, version }) {
     const supportedTypes = [ 'string', 'boolean' ];
     const schema = { options: [], positional: [] };
@@ -103,7 +98,6 @@ function createSchema({ options, positional, version }) {
             long: 'help',
             required: false
         };
-        // TODO: fix:
         if (!schema.options.some(s => s.short === 'h')) {
             help.short = 'h';
         }
@@ -377,7 +371,7 @@ module.exports = {
      *
      * @returns {object} the parsed options, keyed by option name
     **/
-    options: easyOptions,
+    parse: easyOptions,
     /**
      * Creates a parser with the specified option schema.
      *
