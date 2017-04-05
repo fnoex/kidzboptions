@@ -3,7 +3,8 @@
 const kboptions = require('./index');
 
 const options = kboptions.parse({
-    // TODO: banner & version
+    info: "Demonstrates how to use kidzboptions",
+    version: "1.0.0",
     options: {
         "first-name": {
             // currently supported types are "string" or "boolean"

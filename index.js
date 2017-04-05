@@ -4,14 +4,14 @@ const path = require('path');
 const os = require('os');
 const cliFormat = require('cli-format');
 
-function easyOptions() {
-    const parser = createParser(...arguments);
+function easyOptions(config) {
+    const parser = createParser(config);
     const result = parser.parse(process.argv);
     if (result.help) {
         console.log(parser.usage());
         process.exit(0);
     } else if (result.version) {
-        console.log("TODO: version");
+        console.log(parser.version());
         process.exit(0);
     } else if (result.errors.length > 0) {
         console.error(result.errors[0]);
@@ -21,18 +21,26 @@ function easyOptions() {
     return result.options;
 }
 
-function createParser({ banner, version, options = {}, positional = [] }) {
+function createParser({ info, version, options = {}, positional = [] }) {
     const schema = createSchema({ options, positional, version });
-    console.log(schema);
+
     function parse(argv) {
         const components = parseComponents(argv);
-        console.log("parsed components:", components);
         return processComponents(components, schema);
     }
 
     function usage(argv1 = process.argv[1]) {
         const scriptName = path.basename(argv1);
-        return usageFromSchema(schema, scriptName);
+        return generateUsage(info, schema, scriptName);
+    }
+
+    function formatVersion(argv1 = process.argv[1]) {
+        const scriptName = path.basename(argv1);
+        if (version) {
+            return `${scriptName} ${version}`;
+        } else {
+            return scriptName;
+        }
     }
 
     return {
@@ -54,7 +62,11 @@ function createParser({ banner, version, options = {}, positional = [] }) {
          *      value is `process.argv[1]`, which is generally ideal.
          * @returns {String}
         **/
-        usage
+        usage,
+        /**
+         * Gets the version info for this program.
+        **/
+        version: formatVersion
     };
 }
 
@@ -95,7 +107,7 @@ function createSchema({ options, positional, version }) {
         const help = {
             name: 'help',
             type: 'help',
-            description: 'Show this help message.',
+            description: 'Show this message',
             long: 'help',
             required: false
         };
@@ -110,7 +122,7 @@ function createSchema({ options, positional, version }) {
         const version = {
             name: 'version',
             type: 'version',
-            description: 'Print the version number and exit.',
+            description: 'Print version and exit',
             long: 'version',
             required: false
         };
@@ -148,7 +160,6 @@ function parseComponents(argv) {
     }
     const args = argv.slice(2);
 
-    console.log("args:", args);
     const matchers = [
         parseLongOption,
         parseShortOptionSet,
@@ -330,15 +341,17 @@ function processComponents(components, schema) {
     return result;
 }
 
-function usageFromSchema(schema, scriptName) {
+function generateUsage(info, schema, scriptName) {
     let buf = '';
     const eol = os.EOL;
 
-    // TODO: add banner & version
+    if (info) {
+        buf += info;
+        buf += eol;
+    }
+
     buf += `Usage: ${scriptName} [options]`;
-    schema.positional.forEach(scheme => {
-        buf += ` <${scheme.name}>`;
-    });
+    buf += schema.positional.map(scheme => ` <${scheme.name}>`).join('');
     buf += eol;
 
     const leftColumnWidth = function() {
