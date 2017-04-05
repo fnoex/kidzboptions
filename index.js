@@ -2,6 +2,7 @@
 
 const path = require('path');
 const os = require('os');
+const cliFormat = require('cli-format');
 
 function easyOptions() {
     const parser = createParser(...arguments);
@@ -340,22 +341,27 @@ function usageFromSchema(schema, scriptName) {
     });
     buf += eol;
 
-    // TODO: use templates or something
-    schema.options.forEach(scheme => {
-        buf += '  ';
-        if (scheme.short) {
-            buf += `-${scheme.short}`;
-        } else {
-            buf += '  ';
-        }
-        buf += ` --${scheme.long}`;
-        if (scheme.description) {
-            buf += eol;
-            buf += '     ';
-            buf += scheme.description;
-        }
-        buf += eol;
-    });
+    const leftColumnWidth = function() {
+        const prefix = '  -X, --'.length;
+        const longestOption = schema.options.reduce((max, scheme) => Math.max(max, scheme.long.length), 0);
+        return prefix + longestOption;
+    }();
+
+    const leftColumn = schema.options
+        .map(scheme => {
+            const short = scheme.short ? `-${scheme.short}` : '  ';
+            return `  ${short}, --${scheme.long}`;
+        })
+        .join('\n');
+    const rightColumn = schema.options
+        .map(scheme => scheme.description || '')
+        .join('\n');
+    const columns = [
+        { content: leftColumn, width: leftColumnWidth },
+        rightColumn
+    ];
+    buf += cliFormat.columns.wrap(columns, { paddingMiddle: '    ' });
+
     return buf;
 }
 

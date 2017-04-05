@@ -19,5 +19,8 @@
   "devDependencies": {
     "faucet": "0.0.1",
     "tape": "^4.6.3"
+  },
+  "dependencies": {
+    "cli-format": "^3.0.9"
   }
 }
