@@ -5,8 +5,8 @@ const os = require('os');
 
 // TODO: document
 // helper func
-function parse() {
-    const parser = factory(...arguments);
+function easyOptions() {
+    const parser = createParser(...arguments);
     const result = parser.parse(process.argv);
     if (result.help) {
         console.log(parser.usage());
@@ -24,9 +24,9 @@ function parse() {
 
 // TODO: document
 // manual parser creation
-function factory({ banner, version, named = {}, positioned = [] }) {
-    const schema = createSchema({ options: named, positional: positioned, version });
-
+function createParser({ banner, version, options = {}, positional = [] }) {
+    const schema = createSchema({ options, positional, version });
+    console.log(schema);
     function parse(argv) {
         const components = parseComponents(argv);
         console.log("parsed components:", components);
@@ -66,36 +66,6 @@ function createSchema({ options, positional, version }) {
     const supportedTypes = [ 'string', 'boolean' ];
     const schema = { options: [], positional: [] };
 
-    if (!options.help) {
-        // Auto-generate a help option
-        const help = {
-            name: 'help',
-            type: 'help',
-            description: 'Show this help message.',
-            long: 'help',
-            required: false
-        };
-        if (!options.some(option => option.short === 'h')) {
-            help.short = 'h';
-        }
-        schema.options.push(help);
-    }
-
-    if (version && !options.version) {
-        // Auto-generate a version option
-        const version = {
-            name: 'version',
-            type: 'version',
-            description: 'Print the version number and exit.',
-            long: 'version',
-            required: false
-        };
-        if (!options.some(option => option.short === 'v')) {
-            version.short = 'v';
-        }
-        schema.options.push(version);
-    }
-
     Object.keys(options).forEach(key => {
         const option = options[key];
         const type = option.type || 'boolean';
@@ -123,6 +93,37 @@ function createSchema({ options, positional, version }) {
 
         schema.options.push(scheme);
     });
+
+    if (!schema.options.some(s => s.long === 'help')) {
+        // Auto-generate a help option
+        const help = {
+            name: 'help',
+            type: 'help',
+            description: 'Show this help message.',
+            long: 'help',
+            required: false
+        };
+        // TODO: fix:
+        if (!schema.options.some(s => s.short === 'h')) {
+            help.short = 'h';
+        }
+        schema.options.push(help);
+    }
+
+    if (version && !schema.options.some(s => s.long === 'version')) {
+        // Auto-generate a version option
+        const version = {
+            name: 'version',
+            type: 'version',
+            description: 'Print the version number and exit.',
+            long: 'version',
+            required: false
+        };
+        if (!schema.options.some(s => s.short === 'v')) {
+            version.short = 'v';
+        }
+        schema.options.push(version);
+    }
 
     if (positional && positional.length) {
         positional.forEach(key => {
@@ -306,9 +307,9 @@ function processComponents(components, schema) {
             const scheme = positional.shift();
             if (!scheme) {
                 result.errors.push("Unexpected extra argument");
+            } else {
+                result.options[scheme.name] = component.value;
             }
-
-            result.options[scheme.name] = component.value;
         } else {
             const scheme = findScheme(component);
             if (!scheme) {
@@ -376,7 +377,7 @@ module.exports = {
      *
      * @returns {object} the parsed options, keyed by option name
     **/
-    options: parse,
+    options: easyOptions,
     /**
      * Creates a parser with the specified option schema.
      *
@@ -397,5 +398,5 @@ module.exports = {
      * @param {Array<string>} config.positional
      *      The names of required positional arguments.
     **/
-    parser: factory,
+    parser: createParser,
 };

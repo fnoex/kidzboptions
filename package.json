@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "tape tests/**/*_test.js | tap-spec"
+    "test": "tape tests/**/*_test.js | faucet"
   },
   "keywords": [
     "options",
@@ -17,7 +17,7 @@
   "author": "Andrew Watt",
   "license": "none",
   "devDependencies": {
-    "tap-spec": "^4.1.1",
+    "faucet": "0.0.1",
     "tape": "^4.6.3"
   }
 }
