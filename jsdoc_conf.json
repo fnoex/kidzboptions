@@ -1,0 +1,11 @@
+{
+    "source": {
+        "include": [ "index.js" ]
+    },
+    "plugins": [
+        "plugins/markdown"
+    ],
+    "opts": {
+        "readme": "README.md"
+    }
+}

@@ -4,6 +4,18 @@ const path = require('path');
 const os = require('os');
 const cliFormat = require('cli-format');
 
+
+/**
+ * Easy mode. Parses `ARGV` using the specified option schema. If any
+ * arguments are missing or invalid, or if the `--help` option is
+ * specified, usage will be printed and the process will exit.
+ *
+ * @alias options
+ * @param {object} config
+ *      The parser configuration. See {@link parser}.
+ *
+ * @returns {object} the parsed options, keyed by option name
+**/
 function easyOptions(config) {
     const parser = createParser(config);
     const result = parser.parse(process.argv);
@@ -21,19 +33,78 @@ function easyOptions(config) {
     return result.options;
 }
 
+/**
+ * Creates a parser with the specified option schema.
+ *
+ * @alias parser
+ * @param {object} config
+ * @param {string} [config.info]
+ *      A description of the program to be printed with the usage text.
+ * @param {string} [config.version]
+ *      The program version, for the `--version` option.
+ * @param {object} [config.options]
+ *      The options. Each key is the name of an option that will be
+ *      returned in the parse result. The option names double as the
+ *      long-name form of each option. Each option can have the following
+ *      properties, all of which are optional:
+ *
+ *    - `type`: "string" or "boolean" (default: "boolean")
+ *    - `short`: the short option character (default: first character of
+ *      long name, if there is no conflict)
+ *    - `required`: A boolean indicating the field is required. Only
+ *      meaningful for strings. (default: false)
+ *    - `description`: The description, which will be printed in the usage
+ *      text.
+ * @param {array<string>} [config.positional]
+ *      The names of required positional arguments.
+ * @returns {Parser} the parser
+**/
 function createParser({ info, version, options = {}, positional = [] }) {
     const schema = createSchema({ options, positional, version });
 
+    /**
+     * @memberof Parser
+     * @instance
+     *
+     * Parses an `ARGV` array and returns an object representing the result
+     * of parsing.
+     *
+     * @param {array<string>} argv
+     *      The `ARGV` array, generally from `process.argv`.
+     * @returns {ParsingResult} the parsing result
+    **/
     function parse(argv) {
         const components = parseComponents(argv);
         return processComponents(components, schema);
     }
 
+    /**
+     * @memberof Parser
+     * @instance
+     *
+     * Gets a human-friendly string containing the usage info, generated
+     * from the option schema. You can display this with `console.error`
+     * or similar method.
+     * @param {string} [argv1]
+     *      The name of this program to display in the usage. The default
+     *      value is `process.argv[1]`, which is generally ideal.
+     * @returns {string} the usage text
+    **/
     function usage(argv1 = process.argv[1]) {
         const scriptName = path.basename(argv1);
         return generateUsage(info, schema, scriptName);
     }
 
+    /**
+     * @memberof Parser
+     * @instance
+     * @alias version
+     *
+     * Gets the version info string.
+     * @param {string} [argv1]
+     *      The script name. Defaults to the value of `process.argv[1]`.
+     * @returns {string} the version text
+    **/
     function formatVersion(argv1 = process.argv[1]) {
         const scriptName = path.basename(argv1);
         if (version) {
@@ -43,29 +114,12 @@ function createParser({ info, version, options = {}, positional = [] }) {
         }
     }
 
+    /**
+     * @namespace Parser
+    **/
     return {
-        /**
-         * Parses an ARGV array and returns an object representing the result
-         * of parsing.
-         *
-         * @param {array<string>} argv
-         *      The ARGV array, generally from `process.argv`.
-         * @returns {processComponents#result} the parsing result
-        **/
         parse,
-        /**
-         * Gets a human-friendly string containing the usage info, generated
-         * from the option schema. You can display this with `console.error`
-         * or similar method.
-         * @param {String} argv1
-         *      The name of this program to display in the usage. The default
-         *      value is `process.argv[1]`, which is generally ideal.
-         * @returns {String}
-        **/
         usage,
-        /**
-         * Gets the version info for this program.
-        **/
         version: formatVersion
     };
 }
@@ -242,14 +296,6 @@ function parseComponents(argv) {
     return components;
 }
 
-/**
- * Process components using the give schema.
- * @param {array} components
- *      the parsed components
- * @param {object} schema
- *      the option schema to validate against
- * @returns {processComponents#result} the processing result
-**/
 function processComponents(components, schema) {
 
     function findScheme(component) {
@@ -260,14 +306,15 @@ function processComponents(components, schema) {
     }
 
     /**
-     * TODO: look up proper way to jsdoc this
-     * @typedef processComponents#result
-     * @member {object} options
-     * @member {boolean} help
-     *      true if the --help option was invoked
-     * @member {boolean} version
-     *      true if the --version option was invoked
-     * @member {array}
+     * @typedef ParsingResult
+     *
+     * @property {object} options
+     *      the parsed options
+     * @property {boolean} help
+     *      true if the `--help` option was invoked
+     * @property {boolean} version
+     *      true if the `--version` option was invoked
+     * @property {array<string>}
      *      contains parsing errors
     **/
     const result = {
@@ -379,37 +426,6 @@ function generateUsage(info, schema, scriptName) {
 }
 
 module.exports = {
-    /**
-     * Easy mode. Parses ARGV using the specified option schema. If any
-     * arguments are missing or invalid, or if the `--help` option is
-     * specified, usage will be printed and the process will exit.
-     *
-     * @param {object} config
-     *      The parser configuration. See the documentation for `factory`
-     *      for more details.
-     *
-     * @returns {object} the parsed options, keyed by option name
-    **/
     parse: easyOptions,
-    /**
-     * Creates a parser with the specified option schema.
-     *
-     * @param {Object} config
-     * @param {Object} config.options
-     *      The options. Each key is the name of an option that will be
-     *      returned in the parse result. The option names double as the
-     *      long-name form of each option. Each option can have the following
-     *      properties, all of which are optional:
-     *
-     *      type: "string" and "boolean" (default: "boolean")
-     *      short: the short option character (default: first character of
-     *             long name, if there is no conflict)
-     *      required: A boolean indicating the field is required. Only
-     *                meaningful for strings. (default: false)
-     *      description: The description, which will be printed in the usage
-     *                   text.
-     * @param {Array<string>} config.positional
-     *      The names of required positional arguments.
-    **/
     parser: createParser,
 };
