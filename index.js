@@ -10,7 +10,7 @@ const cliFormat = require('cli-format');
  * arguments are missing or invalid, or if the `--help` option is
  * specified, usage will be printed and the process will exit.
  *
- * @alias options
+ * @alias parse
  * @param {object} config
  *      The parser configuration. See {@link parser}.
  *

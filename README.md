@@ -5,9 +5,9 @@ Lightweight and easy command-line option parsing.
 ## Usage
 
 ```javascript
-const kboptions = require('kidzboptions');
+const kidzboptions = require('kidzboptions');
 
-const options = kboptions.parse({
+const options = kidzboptions.parse({
     info: "Demonstrates how to use kidzboptions",
     version: "1.0.0",
     options: {
@@ -46,7 +46,7 @@ const options = kboptions.parse({
 
 ## API
 
-### kidzboptions.options({ info, version, options, positional })
+### kidzboptions.parse({ info, version, options, positional })
 
 This is the easiest way to parse options. You pass in a configuration describing the options you want, and get back an object with option values keyed by option name.
 
