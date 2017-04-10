@@ -1,7 +1,13 @@
 {
   "name": "kidzboptions",
   "version": "1.0.0",
-  "description": "Simple and small command line option parsing.",
+  "description": "Lightweight and easy command line option parsing.",
+  "homepage": "https://github.com/fnoex/kidzboptions",
+  "repository": "https://github.com/fnoex/kidzboptions.git",
+  "bugs": {
+    "url": "https://github.com/fnoex/kidzboptions/issues",
+    "email": "fnoexdev@gmail.com"
+  },
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -11,12 +17,22 @@
     "jsdoc": "jsdoc -c jsdoc_conf.json -d docs"
   },
   "keywords": [
-    "options",
+    "argument",
     "arguments",
-    "getopt"
+    "argv",
+    "cli",
+    "command",
+    "getopt",
+    "option",
+    "options",
+    "parser",
+    "parsing"
   ],
-  "author": "Andrew Watt",
-  "license": "none",
+  "author": {
+    "name": "From Now On",
+    "email": "fnoexdev@gmail.com"
+  },
+  "license": "MIT",
   "devDependencies": {
     "faucet": "0.0.1",
     "jsdoc": "^3.4.3",
@@ -24,5 +40,8 @@
   },
   "dependencies": {
     "cli-format": "^3.0.9"
+  },
+  "engines": {
+    "node": ">=6"
   }
 }
