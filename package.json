@@ -33,6 +33,13 @@
     "email": "fnoexdev@gmail.com"
   },
   "license": "MIT",
+  "files": [
+    ".eslintrc.js",
+    "index.js",
+    "jsdoc_conf.json",
+    "package.json",
+    "README.md"
+  ],
   "devDependencies": {
     "faucet": "0.0.1",
     "jsdoc": "^3.4.3",
