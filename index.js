@@ -55,6 +55,8 @@ function easyOptions(config) {
  *      meaningful for strings. (default: false)
  *    - `description`: The description, which will be printed in the usage
  *      text.
+ *    - `multi`: If true, this argument may occur multiple times, and will be
+ *      parsed into an array of values.
  * @param {array<string>} [config.positional]
  *      The names of required positional arguments.
  * @returns {Parser} the parser
@@ -137,6 +139,7 @@ function createSchema({ options, positional, version }) {
             description: option.description,
             long: key,
             short: option.short,
+            multi: option.multi,
             required: Boolean(option.required)
         };
 
@@ -329,6 +332,10 @@ function processComponents(components, schema) {
             const next = components.shift();
             if (!(next && next.type === 'value')) {
                 result.errors.push(`Argument ${component.raw} requires a string value`);
+            } else if (scheme.multi) {
+                const values = result.options[scheme.name] || [];
+                values.push(next.value);
+                result.options[scheme.name] = values;
             } else {
                 result.options[scheme.name] = next.value;
             }
@@ -377,6 +384,11 @@ function processComponents(components, schema) {
     // Ensure booleans are present
     schema.options.filter(s => s.type === 'boolean').forEach(scheme => {
         result.options[scheme.name] = Boolean(result.options[scheme.name]);
+    });
+
+    // Ensure multi-arg options are present
+    schema.options.filter(s => s.multi).forEach(scheme => {
+        result.options[scheme.name] = result.options[scheme.name] || [];
     });
 
     schema.options.filter(s => s.required).forEach(scheme => {
