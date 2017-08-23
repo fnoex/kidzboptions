@@ -56,7 +56,7 @@ function easyOptions(config) {
  *    - `description`: The description, which will be printed in the usage
  *      text.
  *    - `multi`: If true, this argument may occur multiple times, and will be
- *      parsed into an array of values.
+ *      parsed into an array of values. Only string args are supported.
  * @param {array<string>} [config.positional]
  *      The names of required positional arguments.
  * @returns {Parser} the parser
@@ -154,6 +154,10 @@ function createSchema({ options, positional, version }) {
             if (schema.options.some(s => s.short === option.short)) {
                 throw new Error(`Short option -${option.short} specified twice`);
             }
+        }
+
+        if (option.multi && option.type !== 'string') {
+            throw new Error(`Non-string option ${key} cannot be multi-value`);
         }
 
         schema.options.push(scheme);
