@@ -409,8 +409,8 @@ function generateUsage(info, schema, scriptName) {
 
     const leftColumn = schema.options
         .map(scheme => {
-            const short = scheme.short ? `-${scheme.short}` : '  ';
-            return `  ${short}, --${scheme.long}`;
+            const short = scheme.short ? `-${scheme.short},` : '   ';
+            return `  ${short} --${scheme.long}`;
         })
         .join('\n');
     const rightColumn = schema.options
