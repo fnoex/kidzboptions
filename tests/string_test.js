@@ -55,3 +55,19 @@ test("optional strings can be missing", (t) => {
     t.deepEqual(result.options, {});
     t.end();
 });
+
+test("last value wins", (t) => {
+    t.plan(1);
+
+    const result = kboptions.parser({
+        options: {
+            foo: {
+                type: 'string'
+            }
+        }
+    })
+    .parse(argvFor(['-f', 'a', '-f', 'b']));
+
+    t.deepEqual(result.options, { foo: 'b' });
+    t.end();
+});
