@@ -55,6 +55,8 @@ function easyOptions(config) {
  *      meaningful for strings. (default: false)
  *    - `description`: The description, which will be printed in the usage
  *      text.
+ *    - `multi`: If true, this argument may occur multiple times, and will be
+ *      parsed into an array of values. Only string args are supported.
  * @param {array<string>} [config.positional]
  *      The names of required positional arguments.
  * @returns {Parser} the parser
@@ -137,6 +139,7 @@ function createSchema({ options, positional, version }) {
             description: option.description,
             long: key,
             short: option.short,
+            multi: option.multi,
             required: Boolean(option.required)
         };
 
@@ -151,6 +154,10 @@ function createSchema({ options, positional, version }) {
             if (schema.options.some(s => s.short === option.short)) {
                 throw new Error(`Short option -${option.short} specified twice`);
             }
+        }
+
+        if (option.multi && option.type !== 'string') {
+            throw new Error(`Non-string option ${key} cannot be multi-value`);
         }
 
         schema.options.push(scheme);
@@ -329,6 +336,10 @@ function processComponents(components, schema) {
             const next = components.shift();
             if (!(next && next.type === 'value')) {
                 result.errors.push(`Argument ${component.raw} requires a string value`);
+            } else if (scheme.multi) {
+                const values = result.options[scheme.name] || [];
+                values.push(next.value);
+                result.options[scheme.name] = values;
             } else {
                 result.options[scheme.name] = next.value;
             }
@@ -379,6 +390,11 @@ function processComponents(components, schema) {
         result.options[scheme.name] = Boolean(result.options[scheme.name]);
     });
 
+    // Ensure multi-arg options are present
+    schema.options.filter(s => s.multi).forEach(scheme => {
+        result.options[scheme.name] = result.options[scheme.name] || [];
+    });
+
     schema.options.filter(s => s.required).forEach(scheme => {
         if (!result.options[scheme.name]) {
             result.errors.push(`Missing required option --${scheme.long}`);
@@ -409,8 +425,8 @@ function generateUsage(info, schema, scriptName) {
 
     const leftColumn = schema.options
         .map(scheme => {
-            const short = scheme.short ? `-${scheme.short}` : '  ';
-            return `  ${short}, --${scheme.long}`;
+            const short = scheme.short ? `-${scheme.short},` : '   ';
+            return `  ${short} --${scheme.long}`;
         })
         .join('\n');
     const rightColumn = schema.options
