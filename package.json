@@ -2,11 +2,11 @@
   "name": "kidzboptions",
   "version": "0.9.0",
   "description": "Lightweight and easy command line option parsing.",
-  "homepage": "https://github.com/fnoex/kidzboptions",
-  "repository": "https://github.com/fnoex/kidzboptions.git",
+  "homepage": "https://github.com/watt/kidzboptions",
+  "repository": "https://github.com/watt/kidzboptions.git",
   "bugs": {
-    "url": "https://github.com/fnoex/kidzboptions/issues",
-    "email": "fnoexdev@gmail.com"
+    "url": "https://github.com/watt/kidzboptions/issues",
+    "email": "andrew@watt.coffee"
   },
   "main": "index.js",
   "directories": {
@@ -29,8 +29,8 @@
     "parsing"
   ],
   "author": {
-    "name": "From Now On",
-    "email": "fnoexdev@gmail.com"
+    "name": "Andrew Watt",
+    "email": "andrew@watt.coffee"
   },
   "license": "MIT",
   "files": [
