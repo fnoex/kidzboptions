@@ -6,14 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Support for multi-value arguments
-- This changelog
-
 ### Changed
 ### Deprecated
 ### Removed
 ### Fixed
 ### Security
+
+## [0.10.0] - 2018-03-01
+### Added
+- Support for multi-value arguments
+- This changelog
 
 ## 0.9.0 - 2017-04-10
 ### Added
