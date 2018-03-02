@@ -38,7 +38,8 @@
     "index.js",
     "jsdoc_conf.json",
     "package.json",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "devDependencies": {
     "faucet": "0.0.1",
